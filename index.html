@@ -6,13 +6,15 @@
   <title>회비 납부 체크 웹앱</title>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: center; }
-    th { background-color: #f0f0f0; }
+    table { border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.25rem; text-align: center; white-space: nowrap; }
+    th { background-color: #f0f0f0; font-size: 0.9rem; }
+    td { font-size: 0.9rem; }
     input[type="text"] { padding: 0.5rem; margin-right: 0.5rem; }
+    input[type='checkbox'] { transform: scale(1.1); }
     .member-list { margin-top: 1rem; }
     #downloadBtn, #exportBtn, #importBtn { margin-top: 1rem; padding: 0.5rem 1rem; margin-right: 0.5rem; }
-    
+    td:first-child, th:first-child { min-width: 120px; text-align: left; }
   </style>
 </head>
 <body>
@@ -83,10 +85,8 @@
     }
 
     function downloadAsImage() {
-      // 임시로 삭제 열 숨기기
       document.querySelectorAll('.exclude-print').forEach(el => el.style.display = 'none');
       html2canvas(document.getElementById("captureArea")).then(canvas => {
-        // 다시 원래대로 복원
         document.querySelectorAll('.exclude-print').forEach(el => el.style.display = '');
         const link = document.createElement("a");
         link.download = "payment_status.jpg";
