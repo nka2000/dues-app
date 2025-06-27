@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회비 납부 체크 웹앱</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: center; }
+    th { background-color: #f0f0f0; }
+    input[type="text"] { padding: 0.5rem; margin-right: 0.5rem; }
+    .month-btn { margin: 0.25rem; padding: 0.5rem; }
+    .member-list { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>회비 납부 체크</h1>
+  <div>
+    <input type="text" id="nameInput" placeholder="회원 이름" />
+    <button onclick="addMember()">회원 추가</button>
+  </div>
+  <table id="membersTable"></table>
+
+  <div>
+    <h2>월별 납부 현황 보기</h2>
+    <div id="monthButtons"></div>
+    <div class="member-list">
+      <h3 id="selectedMonthTitle"></h3>
+      <p><strong>납부한 회원:</strong> <span id="paidList"></span></p>
+      <p><strong>미납 회원:</strong> <span id="unpaidList"></span></p>
+    </div>
+  </div>
+
+  <script>
+    const months = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+    let members = JSON.parse(localStorage.getItem("members")) || [];
+
+    function saveData() {
+      localStorage.setItem("members", JSON.stringify(members));
+    }
+
+    function renderTable() {
+      const table = document.getElementById("membersTable");
+      table.innerHTML = "";
+      const headerRow = document.createElement("tr");
+      headerRow.innerHTML = `<th>이름</th>` + months.map(m => `<th>${m}</th>`).join("") + `<th>삭제</th>`;
+      table.appendChild(headerRow);
+
+      members.forEach((member, idx) => {
+        const row = document.createElement("tr");
+        let cells = `<td>${member.name}</td>`;
+        months.forEach((_, mIdx) => {
+          cells += `<td><input type='checkbox' ${member.payments[mIdx] ? "checked" : ""} onchange='togglePayment(${idx}, ${mIdx})'></td>`;
+        });
+        cells += `<td><button onclick='deleteMember(${idx})'>삭제</button></td>`;
+        row.innerHTML = cells;
+        table.appendChild(row);
+      });
+    }
+
+    function renderMonthButtons() {
+      const container = document.getElementById("monthButtons");
+      months.forEach((month, idx) => {
+        const btn = document.createElement("button");
+        btn.textContent = month;
+        btn.className = "month-btn";
+        btn.onclick = () => showMonthStats(idx);
+        container.appendChild(btn);
+      });
+    }
+
+    function togglePayment(memberIdx, monthIdx) {
+      members[memberIdx].payments[monthIdx] = !members[memberIdx].payments[monthIdx];
+      saveData();
+    }
+
+    function deleteMember(idx) {
+      if (confirm("정말 삭제하시겠습니까?")) {
+        members.splice(idx, 1);
+        saveData();
+        renderTable();
+      }
+    }
+
+    function addMember() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name) return;
+      members.push({ name, payments: Array(12).fill(false) });
+      document.getElementById("nameInput").value = "";
+      saveData();
+      renderTable();
+    }
+
+    function showMonthStats(monthIdx) {
+      const paid = members.filter(m => m.payments[monthIdx]).map(m => m.name);
+      const unpaid = members.filter(m => !m.payments[monthIdx]).map(m => m.name);
+      document.getElementById("selectedMonthTitle").textContent = `${months[monthIdx]} 납부 현황`;
+      document.getElementById("paidList").textContent = paid.join(", ") || "없음";
+      document.getElementById("unpaidList").textContent = unpaid.join(", ") || "없음";
+    }
+
+    renderTable();
+    renderMonthButtons();
+  </script>
+</body>
+</html>
