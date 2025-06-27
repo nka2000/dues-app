@@ -38,6 +38,8 @@
     }
 
     function renderTable() {
+      members.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
       const table = document.getElementById("membersTable");
       table.innerHTML = "";
       const headerRow = document.createElement("tr");
@@ -123,4 +125,5 @@
   </script>
 </body>
 </html>
+
 
