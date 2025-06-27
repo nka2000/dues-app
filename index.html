@@ -12,6 +12,7 @@
     input[type="text"] { padding: 0.5rem; margin-right: 0.5rem; }
     .member-list { margin-top: 1rem; }
     #downloadBtn, #exportBtn, #importBtn { margin-top: 1rem; padding: 0.5rem 1rem; margin-right: 0.5rem; }
+    .exclude-print { display: none; }
   </style>
 </head>
 <body>
@@ -43,7 +44,7 @@
       const table = document.getElementById("membersTable");
       table.innerHTML = "";
       const headerRow = document.createElement("tr");
-      headerRow.innerHTML = `<th>이름</th>` + months.map(m => `<th>${m}</th>`).join("") + `<th>삭제</th>`;
+      headerRow.innerHTML = `<th>이름</th>` + months.map(m => `<th>${m}</th>`).join("") + `<th class='exclude-print'>삭제</th>`;
       table.appendChild(headerRow);
 
       members.forEach((member, idx) => {
@@ -53,7 +54,7 @@
           const actualIdx = mIdx + 6;
           cells += `<td><input type='checkbox' ${member.payments[actualIdx] ? "checked" : ""} onchange='togglePayment(${idx}, ${actualIdx})'></td>`;
         });
-        cells += `<td><button onclick='deleteMember(${idx})'>삭제</button></td>`;
+        cells += `<td class='exclude-print'><button onclick='deleteMember(${idx})'>삭제</button></td>`;
         row.innerHTML = cells;
         table.appendChild(row);
       });
@@ -82,7 +83,11 @@
     }
 
     function downloadAsImage() {
+      // 임시로 삭제 열 숨기기
+      document.querySelectorAll('.exclude-print').forEach(el => el.style.display = 'none');
       html2canvas(document.getElementById("captureArea")).then(canvas => {
+        // 다시 원래대로 복원
+        document.querySelectorAll('.exclude-print').forEach(el => el.style.display = '');
         const link = document.createElement("a");
         link.download = "payment_status.jpg";
         link.href = canvas.toDataURL("image/jpeg", 1.0);
