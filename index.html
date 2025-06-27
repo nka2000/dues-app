@@ -12,7 +12,8 @@
     input[type="text"] { padding: 0.5rem; margin: 1rem 0.5rem 0 1rem; }
     input[type='checkbox'] { transform: scale(1.1); }
     #downloadBtn, #exportBtn, #importBtn { padding: 0.5rem 1rem; margin: 1rem 0.25rem; }
-    td:first-child, th:first-child { min-width: 120px; text-align: left; }
+    td:nth-child(1), th:nth-child(1) { min-width: 40px; }
+    td:nth-child(2), th:nth-child(2) { min-width: 100px; text-align: left; }
     #captureArea { overflow-x: auto; text-align: center; }
   </style>
 </head>
@@ -44,12 +45,12 @@
       const table = document.getElementById("membersTable");
       table.innerHTML = "";
       const headerRow = document.createElement("tr");
-      headerRow.innerHTML = `<th>이름</th>` + months.map(m => `<th>${m}</th>`).join("") + `<th class='exclude-print'>삭제</th>`;
+      headerRow.innerHTML = `<th>번호</th><th>이름</th>` + months.map(m => `<th>${m}</th>`).join("") + `<th class='exclude-print'>삭제</th>`;
       table.appendChild(headerRow);
 
       members.forEach((member, idx) => {
         const row = document.createElement("tr");
-        let cells = `<td>${member.name}</td>`;
+        let cells = `<td>${idx + 1}</td><td>${member.name}</td>`;
         months.forEach((_, mIdx) => {
           const actualIdx = mIdx + 6;
           cells += `<td><input type='checkbox' ${member.payments[actualIdx] ? "checked" : ""} onchange='togglePayment(${idx}, ${actualIdx})'></td>`;
