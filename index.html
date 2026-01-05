@@ -11,26 +11,34 @@
     th { background-color: #f0f0f0; }
     input[type="text"] { padding: 0.5rem; margin: 1rem 0.5rem 0 1rem; }
     input[type='checkbox'] { transform: scale(1.1); }
-    #downloadBtn, #exportBtn, #importBtn { padding: 0.5rem 1rem; margin: 1rem 0.25rem; }
+    button { padding: 0.5rem 1rem; margin: 0.25rem; cursor: pointer; }
+    #downloadBtn { background-color: #e0f7fa; border: 1px solid #006064; }
+    #excelBtn { background-color: #e8f5e9; border: 1px solid #1b5e20; } /* 엑셀 버튼 스타일 */
     td:nth-child(1), th:nth-child(1) { min-width: 40px; }
     td:nth-child(2), th:nth-child(2) { min-width: 100px; text-align: left; }
     #captureArea { overflow-x: auto; text-align: center; }
+    .btn-group { text-align: center; margin: 1rem 0; }
   </style>
 </head>
 <body>
-  <div style="text-align:center">
+  <div class="btn-group">
     <input type="text" id="nameInput" placeholder="회원 이름" />
     <button onclick="addMember()">회원 추가</button>
+    <br/><br/>
+    <button id="excelBtn" onclick="downloadAsExcel()">엑셀로 내보내기</button> 
     <button id="downloadBtn" onclick="downloadAsImage()">JPG로 내보내기</button>
-    <button id="exportBtn" onclick="exportData()">데이터 내보내기</button>
+    <button id="exportBtn" onclick="exportData()">데이터 백업(JSON)</button>
     <input type="file" id="importFile" style="display:none" onchange="importData(event)" />
-    <button id="importBtn" onclick="document.getElementById('importFile').click()">데이터 불러오기</button>
+    <button id="importBtn" onclick="document.getElementById('importFile').click()">데이터 복구</button>
   </div>
+  
   <div id="captureArea">
     <table id="membersTable"></table>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script>
     const months = ["7월", "8월", "9월", "10월", "11월", "12월"];
     let members = JSON.parse(localStorage.getItem("members")) || [];
@@ -92,6 +100,32 @@
         link.href = canvas.toDataURL("image/jpeg", 1.0);
         link.click();
       });
+    }
+
+    // --- 엑셀 다운로드 기능 추가 ---
+    function downloadAsExcel() {
+      // 1. 엑셀 헤더 생성
+      const header = ["번호", "이름", ...months];
+
+      // 2. 데이터 변환 (체크박스 true/false -> "O"/"X"로 변환)
+      const data = members.map((member, idx) => {
+        const rowData = [idx + 1, member.name];
+        months.forEach((_, mIdx) => {
+           // 7월~12월 데이터는 인덱스 6~11에 위치
+           const actualIdx = mIdx + 6;
+           rowData.push(member.payments[actualIdx] ? "O" : "X");
+        });
+        return rowData;
+      });
+
+      // 3. 워크북 및 시트 생성
+      const wb = XLSX.utils.book_new();
+      // 헤더와 데이터를 합쳐서 시트로 변환
+      const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
+
+      // 4. 시트 추가 및 다운로드
+      XLSX.utils.book_append_sheet(wb, ws, "회비납부현황");
+      XLSX.writeFile(wb, "회비납부현황.xlsx");
     }
 
     function exportData() {
