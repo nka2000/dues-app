@@ -11,9 +11,14 @@
     th { background-color: #f0f0f0; }
     input[type="text"] { padding: 0.5rem; margin: 1rem 0.5rem 0 1rem; }
     input[type='checkbox'] { transform: scale(1.1); }
-    button { padding: 0.5rem 1rem; margin: 0.25rem; cursor: pointer; }
-    #downloadBtn { background-color: #e0f7fa; border: 1px solid #006064; }
-    #excelBtn { background-color: #e8f5e9; border: 1px solid #1b5e20; } /* 엑셀 버튼 스타일 */
+    
+    /* 버튼 스타일링 */
+    button { padding: 0.5rem 1rem; margin: 0.25rem; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; }
+    #downloadBtn { background-color: #e0f7fa; border-color: #006064; color: #006064; }
+    #excelBtn { background-color: #e8f5e9; border-color: #1b5e20; color: #1b5e20; }
+    /* 초기화 버튼 (주황색 계열로 변경 - 경고 느낌) */
+    #resetBtn { background-color: #fff3e0; border-color: #e65100; color: #e65100; font-weight: bold; }
+    
     td:nth-child(1), th:nth-child(1) { min-width: 40px; }
     td:nth-child(2), th:nth-child(2) { min-width: 100px; text-align: left; }
     #captureArea { overflow-x: auto; text-align: center; }
@@ -27,9 +32,11 @@
     <br/><br/>
     <button id="excelBtn" onclick="downloadAsExcel()">엑셀로 내보내기</button> 
     <button id="downloadBtn" onclick="downloadAsImage()">JPG로 내보내기</button>
+    <br/>
     <button id="exportBtn" onclick="exportData()">데이터 백업(JSON)</button>
     <input type="file" id="importFile" style="display:none" onchange="importData(event)" />
     <button id="importBtn" onclick="document.getElementById('importFile').click()">데이터 복구</button>
+    <button id="resetBtn" onclick="resetPayments()">납부 기록 초기화</button>
   </div>
   
   <div id="captureArea">
@@ -40,7 +47,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    const months = ["7월", "8월", "9월", "10월", "11월", "12월"];
+    const months = ["1월", "2월", "3월", "4월", "5월", "6월", "7월"];
     let members = JSON.parse(localStorage.getItem("members")) || [];
 
     function saveData() {
@@ -53,14 +60,14 @@
       const table = document.getElementById("membersTable");
       table.innerHTML = "";
       const headerRow = document.createElement("tr");
-      headerRow.innerHTML = `<th>번호</th><th>이름</th>` + months.map(m => `<th>${m}</th>`).join("") + `<th class='exclude-print'>삭제</th>`;
+      headerRow.innerHTML = `<th>번호</th><th>이름</th>` + months.map(m => `<th>${m}</th>`).join("") + `<th class='exclude-print'>관리</th>`;
       table.appendChild(headerRow);
 
       members.forEach((member, idx) => {
         const row = document.createElement("tr");
         let cells = `<td>${idx + 1}</td><td>${member.name}</td>`;
         months.forEach((_, mIdx) => {
-          const actualIdx = mIdx + 6;
+          const actualIdx = mIdx; 
           cells += `<td><input type='checkbox' ${member.payments[actualIdx] ? "checked" : ""} onchange='togglePayment(${idx}, ${actualIdx})'></td>`;
         });
         cells += `<td class='exclude-print'><button onclick='deleteMember(${idx})'>삭제</button></td>`;
@@ -75,8 +82,20 @@
     }
 
     function deleteMember(idx) {
-      if (confirm("정말 삭제하시겠습니까?")) {
+      if (confirm("이 회원을 목록에서 삭제하시겠습니까?")) {
         members.splice(idx, 1);
+        saveData();
+        renderTable();
+      }
+    }
+
+    // --- 납부 기록만 초기화 (이름 유지) ---
+    function resetPayments() {
+      if (confirm("모든 회원의 납부 체크(V)를 해제하시겠습니까?\n(회원 이름은 삭제되지 않습니다.)")) {
+        // 모든 멤버를 순회하며 payments 배열을 false로 채움
+        members.forEach(member => {
+            member.payments.fill(false);
+        });
         saveData();
         renderTable();
       }
@@ -102,28 +121,19 @@
       });
     }
 
-    // --- 엑셀 다운로드 기능 추가 ---
     function downloadAsExcel() {
-      // 1. 엑셀 헤더 생성
       const header = ["번호", "이름", ...months];
-
-      // 2. 데이터 변환 (체크박스 true/false -> "O"/"X"로 변환)
       const data = members.map((member, idx) => {
         const rowData = [idx + 1, member.name];
         months.forEach((_, mIdx) => {
-           // 7월~12월 데이터는 인덱스 6~11에 위치
-           const actualIdx = mIdx + 6;
+           const actualIdx = mIdx; 
            rowData.push(member.payments[actualIdx] ? "O" : "X");
         });
         return rowData;
       });
 
-      // 3. 워크북 및 시트 생성
       const wb = XLSX.utils.book_new();
-      // 헤더와 데이터를 합쳐서 시트로 변환
       const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
-
-      // 4. 시트 추가 및 다운로드
       XLSX.utils.book_append_sheet(wb, ws, "회비납부현황");
       XLSX.writeFile(wb, "회비납부현황.xlsx");
     }
